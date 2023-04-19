@@ -54,6 +54,7 @@ extensions = [
     "sphinx_click.ext",
     "sphinx_autodoc_typehints",
     "myst_parser",
+    'sphinx_reredirects'
 ]
 
 # Sphinx variables
@@ -102,3 +103,7 @@ myst_enable_extensions = [
     "deflist",
 ]
 myst_heading_anchors = 3
+
+redirects = {
+    "en/latest/getting_started/quick_start/index": "https://develop.d19pvbre9ckryz.amplifyapp.com/docs/user-documentation/troubleshooting",
+}

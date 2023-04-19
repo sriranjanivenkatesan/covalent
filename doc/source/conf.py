@@ -105,6 +105,5 @@ myst_enable_extensions = [
 myst_heading_anchors = 3
 
 redirects = {
-    # "*": "https://develop.d19pvbre9ckryz.amplifyapp.com/docs/user-documentation/troubleshooting",
     "source/troubleshooting":"https://develop.d19pvbre9ckryz.amplifyapp.com/docs/user-documentation/troubleshooting",
 }

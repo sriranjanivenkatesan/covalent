@@ -106,6 +106,6 @@ myst_heading_anchors = 3
 
 redirects = {
     "troubleshooting":"https://develop.d19pvbre9ckryz.amplifyapp.com/docs/user-documentation/troubleshooting",
-    "./tutorials/tutorials":"https://develop.d19pvbre9ckryz.amplifyapp.com/docs/user-documentation/tutorials",
+    "tutorials/tutorials":"https://develop.d19pvbre9ckryz.amplifyapp.com/docs/user-documentation/tutorials",
     "credentials":"https://develop.d19pvbre9ckryz.amplifyapp.com/docs/user-documentation/credentials/"
 }

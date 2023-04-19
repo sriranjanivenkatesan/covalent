@@ -1,8 +1,3 @@
-Type: Exact Redirect
-From URL: /$rest
-To URL: https://newdocs.example.com/
-Force Redirect: True
-
 #####################
 Troubleshooting guide
 #####################

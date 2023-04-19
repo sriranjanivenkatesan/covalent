@@ -105,5 +105,5 @@ myst_enable_extensions = [
 myst_heading_anchors = 3
 
 redirects = {
-    "en/latest/getting_started/quick_start/index": "https://develop.d19pvbre9ckryz.amplifyapp.com/docs/user-documentation/troubleshooting",
+    "https://covalent1.readthedocs.io/en/latest/getting_started/quick_start/index.html": "https://develop.d19pvbre9ckryz.amplifyapp.com/docs/user-documentation/troubleshooting",
 }

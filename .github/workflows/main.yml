@@ -1,0 +1,30 @@
+name: Publish to covalent-documentation
+
+"on":
+  push:
+    branches:
+      - docusaurus-redirect
+    paths:
+      - 'doc/source/**'
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@docusaurus-redirect
+      - name: Creates output folder and remove markdown
+        run:  |
+              mkdir output
+              cp -r posts output
+      - name: Pushes to private repository
+        id: push_directory
+        uses: cpina/github-action-push-to-another-repository@feature/cicd
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+        with:
+          source-directory: output/
+          destination-github-username: 'sriranjanivenkatesan'
+          destination-repository-name: 'covalent-documentation'
+          user-email: sriranjani.venkatesan@psiog.com
+          commit-message: pushed from $GITHUB_REF
+          target-branch: feature/cicd

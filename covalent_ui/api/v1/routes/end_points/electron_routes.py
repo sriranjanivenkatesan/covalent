@@ -21,20 +21,27 @@
 """Electrons Route"""
 
 import uuid
+from typing import List, Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from sqlalchemy.orm import Session
 
+import covalent_ui.api.v1.database.config.db as db
 from covalent._results_manager.results_manager import get_result
+from covalent_dispatcher._core.execution import _get_task_inputs as get_task_inputs
 from covalent_ui.api.v1.data_layer.electron_dal import Electrons
-from covalent_ui.api.v1.database.config.db import engine
 from covalent_ui.api.v1.models.electrons_model import (
     ElectronExecutorResponse,
     ElectronFileOutput,
     ElectronFileResponse,
     ElectronResponse,
+    Job,
+    JobDetails,
+    JobDetailsResponse,
+    JobsResponse,
 )
 from covalent_ui.api.v1.utils.file_handle import FileHandler, validate_data
+from covalent_ui.api.v1.utils.models_helper import JobsSortBy, SortDirection
 
 routes: APIRouter = APIRouter()
 
@@ -49,7 +56,7 @@ def get_electron_details(dispatch_id: uuid.UUID, electron_id: int):
     Returns:
         Returns the electron details
     """
-    with Session(engine) as session:
+    with Session(db.engine) as session:
         electron = Electrons(session)
         result = electron.get_electrons_id(dispatch_id, electron_id)
         if result is None:
@@ -63,6 +70,16 @@ def get_electron_details(dispatch_id: uuid.UUID, electron_id: int):
                     }
                 ],
             )
+        qelectron = {
+            "total_quantum_calls": electron.get_total_quantum_calls(
+                dispatch_id, result["transport_graph_node_id"], result["qelectron_data_exists"]
+            ),
+            "avg_quantum_calls": electron.get_avg_quantum_calls(
+                dispatch_id=dispatch_id,
+                is_qa_electron=result["qelectron_data_exists"],
+                node_id=result["transport_graph_node_id"],
+            ),
+        }
         return ElectronResponse(
             id=result["id"],
             node_id=result["transport_graph_node_id"],
@@ -75,6 +92,8 @@ def get_electron_details(dispatch_id: uuid.UUID, electron_id: int):
             ended_at=result["completed_at"],
             runtime=result["runtime"],
             description="",
+            qelectron_data_exists=bool(result["qelectron_data_exists"]),
+            qelectron=qelectron if bool(result["qelectron_data_exists"]) else None,
         )
 
 
@@ -87,11 +106,10 @@ def get_electron_inputs(dispatch_id: uuid.UUID, electron_id: int) -> str:
     Returns:
         Returns the inputs data from Result object
     """
-    from covalent_dispatcher._core.execution import _get_task_inputs as get_task_inputs
 
     result_object = get_result(dispatch_id=str(dispatch_id), wait=False)
 
-    with Session(engine) as session:
+    with Session(db.engine) as session:
         electron = Electrons(session)
         result = electron.get_electrons_id(dispatch_id, electron_id)
         inputs = get_task_inputs(
@@ -113,7 +131,7 @@ def get_electron_file(dispatch_id: uuid.UUID, electron_id: int, name: ElectronFi
         Returns electron details based on the given name
     """
 
-    with Session(engine) as session:
+    with Session(db.engine) as session:
         electron = Electrons(session)
         result = electron.get_electrons_id(dispatch_id, electron_id)
         if result is not None:
@@ -173,3 +191,65 @@ def get_electron_file(dispatch_id: uuid.UUID, electron_id: int, name: ElectronFi
                     }
                 ],
             )
+
+
+@routes.get("/{dispatch_id}/electron/{electron_id}/jobs", response_model=List[Job])
+def get_electron_jobs(
+    dispatch_id: uuid.UUID,
+    electron_id: int,
+    sort_by: Optional[JobsSortBy] = JobsSortBy.START_TIME,
+    sort_direction: Optional[SortDirection] = SortDirection.DESCENDING,
+    count: Optional[int] = None,
+    offset: Optional[int] = Query(0),
+) -> List[Job]:
+    """Get Electron Jobs List
+
+    Args:
+        dispatch_id: To fetch electron data with dispatch id
+        electron_id: To fetch electron data with the provided electron id.
+
+    Returns:
+        Returns the list of electron jobs
+    """
+    with Session(db.engine) as session:
+        electron = Electrons(session)
+        jobs_response: JobsResponse = electron.get_jobs(
+            dispatch_id=dispatch_id,
+            electron_id=electron_id,
+            sort_by=sort_by,
+            sort_direction=sort_direction,
+            count=count,
+            offset=offset,
+        )
+        if jobs_response.data is None:
+            raise HTTPException(
+                status_code=422,
+                detail=[{"msg": jobs_response.msg}],
+            )
+        return jobs_response.data
+
+
+@routes.get("/{dispatch_id}/electron/{electron_id}/jobs/{job_id}", response_model=JobDetails)
+def get_electron_job_overview(dispatch_id: uuid.UUID, electron_id: int, job_id: str) -> JobDetails:
+    """Get Electron Job Detail
+
+    Args:
+        dispatch_id: To fetch electron data with dispatch id
+        electron_id: To fetch electron data with the provided electron id.
+        job_id: To fetch appropriate job details with job id
+
+    Returns:
+        Returns the electron job details
+    """
+    with Session(db.engine) as session:
+        electron = Electrons(session)
+        job_response: JobDetailsResponse = electron.get_job_detail(
+            dispatch_id, electron_id, job_id
+        )
+        if job_response.data is None:
+            raise HTTPException(
+                status_code=422,
+                detail=[{"msg": job_response.msg}],
+            )
+
+        return job_response.data

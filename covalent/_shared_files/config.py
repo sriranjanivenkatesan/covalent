@@ -18,7 +18,7 @@
 #
 # Relief from the License may be granted by purchasing a commercial license.
 
-import fcntl
+
 import os
 import shutil
 from dataclasses import asdict
@@ -27,6 +27,7 @@ from operator import getitem
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
+import filelock
 import toml
 
 """Configuration manager."""
@@ -59,10 +60,6 @@ class ConfigManager:
 
         Path(self.get("sdk.log_dir")).mkdir(parents=True, exist_ok=True)
         Path(self.get("sdk.executor_dir")).mkdir(parents=True, exist_ok=True)
-        Path(self.get("dispatcher.cache_dir")).mkdir(parents=True, exist_ok=True)
-        Path(self.get("dispatcher.results_dir")).mkdir(parents=True, exist_ok=True)
-        Path(self.get("dispatcher.log_dir")).mkdir(parents=True, exist_ok=True)
-        Path(self.get("user_interface.log_dir")).mkdir(parents=True, exist_ok=True)
         Path(self.get("dispatcher.db_path")).parent.mkdir(parents=True, exist_ok=True)
 
     def generate_default_config(self) -> None:
@@ -113,16 +110,16 @@ class ConfigManager:
                         else:
                             old_dict.setdefault(key, value)
 
-        with open(self.config_file, "r+") as f:
-            fcntl.lockf(f, fcntl.LOCK_EX)
-            file_config = toml.load(f)
+        with filelock.FileLock(f"{self.config_file}.lock", timeout=1):
+            with open(self.config_file, "r+") as f:
+                file_config = toml.load(f)
 
-            update_nested_dict(self.config_data, file_config)
-            if new_entries:
-                update_nested_dict(self.config_data, new_entries, override_existing)
+                update_nested_dict(self.config_data, file_config)
+                if new_entries:
+                    update_nested_dict(self.config_data, new_entries, override_existing)
 
-            # Writing it back to the file
-            self.write_config()
+                # Writing it back to the file
+                self.write_config()
 
     def read_config(self) -> None:
         """
@@ -147,8 +144,8 @@ class ConfigManager:
         Returns:
             None
         """
+
         with open(self.config_file, "w") as f:
-            fcntl.lockf(f, fcntl.LOCK_EX)
             toml.dump(self.config_data, f)
 
     def purge_config(self) -> None:
@@ -283,7 +280,7 @@ def update_config(new_entries: Optional[Dict] = None, override_existing: bool = 
 
     Args:
         new_entries: Dictionary of new entries added or updated in the config
-        defaults: If False (which is the default), default values do not overwrite
+        override_existing: If True (which is the default), default values overwrite
             existing entries.
 
     Returns:

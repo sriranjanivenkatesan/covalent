@@ -22,6 +22,19 @@ The following API documentation describes how to use Covalent.
 - :ref:`dispatcher_interface` is used for dispatching workflows and stopping triggered dispatches
 - The :ref:`dispatcher_server_api` is used for interfacing with the Covalent server
 
+
+.. _cloud_executor:
+
+Cloud Executor
+"""""""""""""""""""""""""""
+
+Executing cloud
+
+.. autoclass:: covalent.executor.prodpy.cloud_executor.CloudExecutor
+    :members:
+    :inherited-members:
+
+
 .. _electrons_api:
 
 Electron

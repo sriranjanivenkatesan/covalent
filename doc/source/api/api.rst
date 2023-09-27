@@ -30,6 +30,8 @@ Cloud Executor
 
 Executing cloud
 
+.. autodecorator:: dataclass 
+
 .. autoclass:: covalent.executor.prodpy.cloud_executor.CloudExecutor
     :members:
     :inherited-members:
